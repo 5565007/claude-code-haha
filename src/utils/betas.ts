@@ -27,7 +27,7 @@ import { has1mContext } from './context.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 import { getCanonicalName } from './model/model.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
-import { getAPIProvider } from './model/providers.js'
+import { getAPIProvider, isFirstPartyAnthropicBaseUrl } from './model/providers.js'
 import { getInitialSettings } from './settings/settings.js'
 
 /**
@@ -215,6 +215,7 @@ export function getToolSearchBetaHeader(): string {
 export function shouldIncludeFirstPartyOnlyBetas(): boolean {
   return (
     (getAPIProvider() === 'firstParty' || getAPIProvider() === 'foundry') &&
+    (getAPIProvider() !== 'firstParty' || isFirstPartyAnthropicBaseUrl()) &&
     !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)
   )
 }
@@ -227,6 +228,7 @@ export function shouldIncludeFirstPartyOnlyBetas(): boolean {
 export function shouldUseGlobalCacheScope(): boolean {
   return (
     getAPIProvider() === 'firstParty' &&
+    isFirstPartyAnthropicBaseUrl() &&
     !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)
   )
 }
@@ -235,7 +237,20 @@ export const getAllModelBetas = memoize((model: string): string[] => {
   const betaHeaders = []
   const isHaiku = getCanonicalName(model).includes('haiku')
   const provider = getAPIProvider()
+  const isCustomAnthropicCompatibleRelay =
+    provider === 'firstParty' && !isFirstPartyAnthropicBaseUrl()
   const includeFirstPartyOnlyBetas = shouldIncludeFirstPartyOnlyBetas()
+
+  if (isCustomAnthropicCompatibleRelay) {
+    if (process.env.ANTHROPIC_BETAS) {
+      betaHeaders.push(
+        ...process.env.ANTHROPIC_BETAS.split(',')
+          .map(_ => _.trim())
+          .filter(Boolean),
+      )
+    }
+    return betaHeaders
+  }
 
   if (!isHaiku) {
     betaHeaders.push(CLAUDE_CODE_20250219_BETA_HEADER)
@@ -399,11 +414,13 @@ export function getMergedBetas(
   options?: { isAgenticQuery?: boolean },
 ): string[] {
   const baseBetas = [...getModelBetas(model)]
+  const shouldForceAgenticBetas =
+    !(getAPIProvider() === 'firstParty' && !isFirstPartyAnthropicBaseUrl())
 
   // Agentic queries always need claude-code and cli-internal beta headers.
   // For non-Haiku models these are already in baseBetas; for Haiku they're
   // excluded by getAllModelBetas() since non-agentic Haiku calls don't need them.
-  if (options?.isAgenticQuery) {
+  if (options?.isAgenticQuery && shouldForceAgenticBetas) {
     if (!baseBetas.includes(CLAUDE_CODE_20250219_BETA_HEADER)) {
       baseBetas.push(CLAUDE_CODE_20250219_BETA_HEADER)
     }

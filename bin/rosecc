@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+LOCAL_BUN="$ROOT_DIR/.runtime/bun/windows-x64-1.3.11/bin/bun.exe"
+BUN_BIN="${ROSECC_BUN_PATH:-}"
+if [[ -z "$BUN_BIN" && -x "$LOCAL_BUN" ]]; then
+  BUN_BIN="$LOCAL_BUN"
+fi
+if [[ -z "$BUN_BIN" ]]; then
+  BUN_BIN="$(command -v bun || command -v bun.exe || true)"
+fi
+if [[ -z "$BUN_BIN" ]]; then
+  echo "Error: bun is not installed or not available in PATH." >&2
+  exit 1
+fi
+
+ENV_BASE_URL="${ANTHROPIC_BASE_URL:-}"
+if [[ -z "$ENV_BASE_URL" && -f "$ROOT_DIR/.env" ]]; then
+  ENV_BASE_URL="$(grep -E '^ANTHROPIC_BASE_URL=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
+fi
+
+ENV_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-}"
+if [[ -z "$ENV_AUTH_TOKEN" && -f "$ROOT_DIR/.env" ]]; then
+  ENV_AUTH_TOKEN="$(grep -E '^ANTHROPIC_AUTH_TOKEN=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
+fi
+
+ENV_API_KEY="${ANTHROPIC_API_KEY:-}"
+if [[ -z "$ENV_API_KEY" && -f "$ROOT_DIR/.env" ]]; then
+  ENV_API_KEY="$(grep -E '^ANTHROPIC_API_KEY=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
+fi
+
+if [[ -n "${ENV_BASE_URL:-}" || -n "${ENV_AUTH_TOKEN:-}" || -n "${ENV_API_KEY:-}" ]]; then
+  export CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST=1
+fi
+
+exec "$BUN_BIN" --env-file=.env ./src/entrypoints/rosecc.ts "$@"

@@ -1,14 +1,16 @@
 {
-  "name": "claude-code-local",
+  "name": "rosecc-local",
   "version": "999.0.0-local",
   "private": true,
   "type": "module",
   "bin": {
+    "rosecc": "./bin/rosecc.js",
     "claude-haha": "./bin/claude-haha"
   },
   "scripts": {
+    "rosecc": "bun run ./bin/rosecc",
     "claude-haha": "bun run ./bin/claude-haha",
-    "start": "bun run ./bin/claude-haha"
+    "start": "bun run ./bin/rosecc"
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "^0.0.44",
