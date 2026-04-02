@@ -1,11 +1,43 @@
 {
-  "name": "rosecc-local",
-  "version": "999.0.0-local",
-  "private": true,
+  "name": "rosecc",
+  "version": "0.1.0",
+  "private": false,
+  "description": "RoseCC CLI with OpenAI relay support and Claude Code style workflow",
+  "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/5565007/claude-code-haha",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/5565007/claude-code-haha.git"
+  },
+  "bugs": {
+    "url": "https://github.com/5565007/claude-code-haha/issues"
+  },
+  "keywords": [
+    "rosecc",
+    "cli",
+    "openai",
+    "relay",
+    "agent",
+    "mcp"
+  ],
   "bin": {
-    "rosecc": "./bin/rosecc.js",
-    "claude-haha": "./bin/claude-haha"
+    "rosecc": "bin/rosecc.js",
+    "claude-haha": "bin/claude-haha"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "stubs/",
+    "README.md",
+    "README.en.md",
+    "docs/CC-使用文档.md",
+    "preload.ts",
+    "tsconfig.json",
+    "bunfig.toml"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "rosecc": "bun run ./bin/rosecc",

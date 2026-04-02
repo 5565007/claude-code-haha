@@ -17,23 +17,10 @@ if [[ -z "$BUN_BIN" ]]; then
   exit 1
 fi
 
-ENV_BASE_URL="${ANTHROPIC_BASE_URL:-}"
-if [[ -z "$ENV_BASE_URL" && -f "$ROOT_DIR/.env" ]]; then
-  ENV_BASE_URL="$(grep -E '^ANTHROPIC_BASE_URL=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
+ARGS=()
+
+if [[ "${ROSECC_LOAD_DOTENV:-0}" == "1" ]]; then
+  ARGS+=(--env-file=.env)
 fi
 
-ENV_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-}"
-if [[ -z "$ENV_AUTH_TOKEN" && -f "$ROOT_DIR/.env" ]]; then
-  ENV_AUTH_TOKEN="$(grep -E '^ANTHROPIC_AUTH_TOKEN=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
-fi
-
-ENV_API_KEY="${ANTHROPIC_API_KEY:-}"
-if [[ -z "$ENV_API_KEY" && -f "$ROOT_DIR/.env" ]]; then
-  ENV_API_KEY="$(grep -E '^ANTHROPIC_API_KEY=' "$ROOT_DIR/.env" | head -n 1 | cut -d '=' -f 2- || true)"
-fi
-
-if [[ -n "${ENV_BASE_URL:-}" || -n "${ENV_AUTH_TOKEN:-}" || -n "${ENV_API_KEY:-}" ]]; then
-  export CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST=1
-fi
-
-exec "$BUN_BIN" --env-file=.env ./src/entrypoints/rosecc.ts "$@"
+exec "$BUN_BIN" "${ARGS[@]}" ./src/entrypoints/rosecc.ts "$@"

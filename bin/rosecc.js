@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'child_process'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -23,46 +23,13 @@ const bunCommand =
     : process.platform === 'win32'
       ? 'bun.exe'
       : 'bun')
-const args = ['--env-file=.env']
-const envFilePath = resolve(rootDir, '.env')
+const args = []
 const cliArgs = process.argv.slice(2)
 
-function readEnvValue(name) {
-  try {
-    const content = readFileSync(envFilePath, 'utf8')
-    for (const line of content.split(/\r?\n/)) {
-      if (!line || line.trimStart().startsWith('#')) {
-        continue
-      }
-      const index = line.indexOf('=')
-      if (index === -1) {
-        continue
-      }
-      const key = line.slice(0, index).trim()
-      if (key !== name) {
-        continue
-      }
-      return line.slice(index + 1).trim()
-    }
-  } catch {
-    return undefined
-  }
-
-  return undefined
-}
-
 const childEnv = { ...process.env }
-const routedBaseUrl =
-  childEnv.ANTHROPIC_BASE_URL ?? readEnvValue('ANTHROPIC_BASE_URL')
-const routedAuthToken =
-  childEnv.ANTHROPIC_AUTH_TOKEN ?? readEnvValue('ANTHROPIC_AUTH_TOKEN')
-const routedApiKey =
-  childEnv.ANTHROPIC_API_KEY ?? readEnvValue('ANTHROPIC_API_KEY')
 
-if (routedBaseUrl || routedAuthToken || routedApiKey) {
-  // Keep routing under the launcher's control so ~/.claude/settings.json
-  // cannot silently replace relay endpoint, auth, or default models.
-  childEnv.CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST = '1'
+if (process.env.ROSECC_LOAD_DOTENV === '1') {
+  args.push('--env-file=.env')
 }
 
 args.push('./src/entrypoints/rosecc.ts')
